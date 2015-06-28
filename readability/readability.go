@@ -82,12 +82,8 @@ func (reader *ReaderClient) AddBookmark(uri string) (resp *http.Response, err er
 	return reader.Post("/bookmarks", url.Values{"url": {uri}})
 }
 
-func sign(client *oauth.Client, credentials *oauth.Credentials, method string, uri string, data url.Values) {
-	client.SignForm(credentials, "POST", uri, data)
-}
-
 func post(client *oauth.Client, credentials *oauth.Credentials, uri string, data url.Values) (r *http.Response, err error) {
-	sign(client, credentials, "POST", uri, data)
+	client.SignForm(credentials, "POST", uri, data)
 	resp, err := http.PostForm(uri, data)
 	if err != nil {
 		return resp, err
