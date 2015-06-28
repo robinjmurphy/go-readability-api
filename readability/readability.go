@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/garyburd/go-oauth/oauth"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 )
@@ -37,7 +38,7 @@ func NewClient(key, secret string) *Client {
 	return &client
 }
 
-// NewReader returns a new ReaderClient.
+// NewReaderClient returns a new ReaderClient.
 func (client *Client) NewReaderClient(token, secret string) *ReaderClient {
 	credentials := oauth.Credentials{Token: token, Secret: secret}
 	reader := ReaderClient{
@@ -48,26 +49,52 @@ func (client *Client) NewReaderClient(token, secret string) *ReaderClient {
 	return &reader
 }
 
-// Sign appends OAuth parameters to a set of url.Values.
-func (reader *ReaderClient) Sign(method string, uri string, data url.Values) {
-	reader.OAuthClient.SignForm(reader.OAuthCredentials, "POST", uri, data)
+// Login returns an access token and secret for a user that can be used to
+// create a ReaderClient.
+func (client *Client) Login(username, password string) (token, secret string, err error) {
+	resp, err := post(client.OAuthClient, nil, client.LoginURL, url.Values{
+		"x_auth_username": {username},
+		"x_auth_password": {password},
+		"x_auth_mode":     {"client_auth"},
+	})
+	if err != nil {
+		return token, secret, err
+	}
+	body, err := ioutil.ReadAll(resp.Body)
+	if (err) != nil {
+		return token, secret, err
+	}
+	formData, err := url.ParseQuery(string(body))
+	if (err) != nil {
+		return token, secret, err
+	}
+	return formData.Get("access_token"), formData.Get("access_token_secret"), nil
 }
 
 // Post makes a HTTP POST request to the Reader API.
 func (reader *ReaderClient) Post(path string, data url.Values) (r *http.Response, err error) {
 	uri := reader.BaseURL + path
-	reader.Sign("POST", uri, data)
-	resp, err := http.PostForm(uri, data)
-	if err != nil {
-		return resp, err
-	}
-	if resp.StatusCode >= 400 {
-		return resp, errors.New(fmt.Sprintf("%s. %s %s.", resp.Status, resp.Request.Method, resp.Request.URL))
-	}
-	return resp, nil
+	return post(reader.OAuthClient, reader.OAuthCredentials, uri, data)
 }
 
 // AddBookmark creates a new bookmark for a URL.
 func (reader *ReaderClient) AddBookmark(uri string) (resp *http.Response, err error) {
 	return reader.Post("/bookmarks", url.Values{"url": {uri}})
+}
+
+func sign(client *oauth.Client, credentials *oauth.Credentials, method string, uri string, data url.Values) {
+	client.SignForm(credentials, "POST", uri, data)
+}
+
+func post(client *oauth.Client, credentials *oauth.Credentials, uri string, data url.Values) (r *http.Response, err error) {
+	sign(client, credentials, "POST", uri, data)
+	resp, err := http.PostForm(uri, data)
+	if err != nil {
+		return resp, err
+	}
+	if resp.StatusCode >= 400 {
+		return resp, errors.New(
+			fmt.Sprintf("%s. %s %s.", resp.Status, resp.Request.Method, resp.Request.URL))
+	}
+	return resp, nil
 }

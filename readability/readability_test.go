@@ -1,6 +1,7 @@
 package readability
 
 import (
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -43,6 +44,25 @@ func TestNewClient(t *testing.T) {
 	readerBaseUrl := c.ReaderBaseURL
 	if readerBaseUrl != DefaultReaderBaseURL {
 		t.Errorf("NewClient ReaderBaseURL is %v, expected %v", readerBaseUrl, DefaultReaderBaseURL)
+	}
+}
+
+func TestLogin(t *testing.T) {
+	setup()
+	defer teardown()
+	expectedToken := "a_token"
+	expectedSecret := "a_secret"
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		testMethod(t, r, "POST")
+		fmt.Fprintf(w, "access_token=%s&access_token_secret=%s", expectedToken, expectedSecret)
+	})
+	token, secret, err := client.Login("username", "password")
+	check(t, err)
+	if token != expectedToken {
+		t.Errorf("Token %s, expected %s", token, expectedToken)
+	}
+	if secret != expectedSecret {
+		t.Errorf("Secret %s, expected %s", secret, expectedSecret)
 	}
 }
 
