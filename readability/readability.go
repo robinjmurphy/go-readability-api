@@ -10,8 +10,8 @@ import (
 	"net/url"
 )
 
-const DefaultLoginURL = "https://www.readability.com/api/rest/v1/oauth/access_token/"
-const DefaultReaderBaseURL = "https://www.readability.com/api/rest/v1/"
+const DefaultLoginURL = "https://www.readability.com/api/rest/v1/oauth/access_token"
+const DefaultReaderBaseURL = "https://www.readability.com/api/rest/v1"
 
 // A Client manages communication with the Readability APIs.
 type Client struct {
@@ -68,7 +68,7 @@ func (client *Client) Login(username, password string) (token, secret string, er
 	if (err) != nil {
 		return token, secret, err
 	}
-	return formData.Get("access_token"), formData.Get("access_token_secret"), nil
+	return formData.Get("oauth_token"), formData.Get("oauth_token_secret"), nil
 }
 
 // Post makes a HTTP POST request to the Reader API.
@@ -90,7 +90,7 @@ func post(client *oauth.Client, credentials *oauth.Credentials, uri string, data
 	}
 	if resp.StatusCode >= 400 {
 		return resp, errors.New(
-			fmt.Sprintf("%s. %s %s.", resp.Status, resp.Request.Method, resp.Request.URL))
+			fmt.Sprintf("Error %d %s: %s %s", resp.StatusCode, http.StatusText(resp.StatusCode), resp.Request.Method, resp.Request.URL))
 	}
 	return resp, nil
 }

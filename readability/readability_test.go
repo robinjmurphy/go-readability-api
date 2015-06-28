@@ -54,7 +54,7 @@ func TestLogin(t *testing.T) {
 	expectedSecret := "a_secret"
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		testMethod(t, r, "POST")
-		fmt.Fprintf(w, "access_token=%s&access_token_secret=%s", expectedToken, expectedSecret)
+		fmt.Fprintf(w, "oauth_token=%s&oauth_token_secret=%s", expectedToken, expectedSecret)
 	})
 	token, secret, err := client.Login("username", "password")
 	check(t, err)
