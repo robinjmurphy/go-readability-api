@@ -1,6 +1,6 @@
 # go-readability-api
 
-[![GoDoc](https://godoc.org/github.com/robinjmurphy/go-readability-api/readability?status.svg)](https://godoc.org/github.com/robinjmurphy/go-readability-api/readability)
+[![GoDoc](https://godoc.org/github.com/robinjmurphy/go-readability-api/readability?status.svg)](https://godoc.org/github.com/robinjmurphy/go-readability-api/readability) [![Build Status](https://travis-ci.org/robinjmurphy/go-readability-api.svg)](https://travis-ci.org/robinjmurphy/go-readability-api)
 
 > Go client library for accessing the [Readability APIs](https://readability.com/developers/api)
 
