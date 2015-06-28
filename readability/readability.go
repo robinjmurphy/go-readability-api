@@ -14,10 +14,9 @@ const DefaultReaderBaseURL = "https://www.readability.com/api/rest/v1/"
 
 // A Client manages communication with the Readability APIs.
 type Client struct {
-	LoginURL       string
-	ReaderBaseURL  string
-	ConsumerKey    string
-	ConsumerSecret string
+	LoginURL      string
+	ReaderBaseURL string
+	OAuthClient   *oauth.Client
 }
 
 // A ReaderClient models the Readability Reader API.
@@ -29,23 +28,22 @@ type ReaderClient struct {
 
 // NewClient returns a new Readability client.
 func NewClient(key, secret string) *Client {
+	credentials := oauth.Credentials{Token: key, Secret: secret}
 	client := Client{
-		LoginURL:       DefaultLoginURL,
-		ReaderBaseURL:  DefaultReaderBaseURL,
-		ConsumerKey:    key,
-		ConsumerSecret: secret,
+		LoginURL:      DefaultLoginURL,
+		ReaderBaseURL: DefaultReaderBaseURL,
+		OAuthClient:   &oauth.Client{Credentials: credentials},
 	}
 	return &client
 }
 
 // NewReader returns a new ReaderClient.
 func (client *Client) NewReaderClient(token, secret string) *ReaderClient {
-	consumerCredentials := oauth.Credentials{Token: client.ConsumerKey, Secret: client.ConsumerSecret}
-	userCredentials := oauth.Credentials{Token: token, Secret: secret}
+	credentials := oauth.Credentials{Token: token, Secret: secret}
 	reader := ReaderClient{
 		BaseURL:          client.ReaderBaseURL,
-		OAuthClient:      &oauth.Client{Credentials: consumerCredentials},
-		OAuthCredentials: &userCredentials,
+		OAuthClient:      client.OAuthClient,
+		OAuthCredentials: &credentials,
 	}
 	return &reader
 }
