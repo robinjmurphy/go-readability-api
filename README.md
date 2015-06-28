@@ -4,7 +4,7 @@
 
 > Go client library for accessing the [Readability APIs](https://readability.com/developers/api)
 
-Currently supports the Readability [Reader API](https://readability.com/developers/api/reader).
+This package is a work in progress and currently **only** supports retrieving user credentials and creating bookmarks.
 
 ## Installation
 

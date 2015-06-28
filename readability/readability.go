@@ -4,10 +4,11 @@ package readability
 import (
 	"errors"
 	"fmt"
-	"github.com/garyburd/go-oauth/oauth"
 	"io/ioutil"
 	"net/http"
 	"net/url"
+
+	"github.com/garyburd/go-oauth/oauth"
 )
 
 const DefaultLoginURL = "https://www.readability.com/api/rest/v1/oauth/access_token"
