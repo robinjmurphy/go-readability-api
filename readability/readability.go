@@ -1,4 +1,4 @@
-// Package readability provides access to the Readability APIs
+// Package readability provides access to the Readability APIs.
 package readability
 
 import (
@@ -12,7 +12,7 @@ import (
 const DefaultLoginURL = "https://www.readability.com/api/rest/v1/oauth/access_token/"
 const DefaultReaderBaseURL = "https://www.readability.com/api/rest/v1/"
 
-// A Client manages communication with the Readability APIs
+// A Client manages communication with the Readability APIs.
 type Client struct {
 	LoginURL       string
 	ReaderBaseURL  string
@@ -20,14 +20,14 @@ type Client struct {
 	ConsumerSecret string
 }
 
-// A ReaderClient models the Readability Reader API
+// A ReaderClient models the Readability Reader API.
 type ReaderClient struct {
 	BaseURL          string
 	OAuthClient      *oauth.Client
 	OAuthCredentials *oauth.Credentials
 }
 
-// NewClient returns a new Readability client
+// NewClient returns a new Readability client.
 func NewClient(key, secret string) *Client {
 	client := Client{
 		LoginURL:       DefaultLoginURL,
@@ -38,7 +38,7 @@ func NewClient(key, secret string) *Client {
 	return &client
 }
 
-// NewReader returns a new ReaderClient
+// NewReader returns a new ReaderClient.
 func (client *Client) NewReaderClient(token, secret string) *ReaderClient {
 	consumerCredentials := oauth.Credentials{Token: client.ConsumerKey, Secret: client.ConsumerSecret}
 	userCredentials := oauth.Credentials{Token: token, Secret: secret}
@@ -50,12 +50,12 @@ func (client *Client) NewReaderClient(token, secret string) *ReaderClient {
 	return &reader
 }
 
-// Sign appends OAuth parameters to a set of url.Values
+// Sign appends OAuth parameters to a set of url.Values.
 func (reader *ReaderClient) Sign(method string, uri string, data url.Values) {
 	reader.OAuthClient.SignForm(reader.OAuthCredentials, "POST", uri, data)
 }
 
-// Post makes a HTTP POST request to the Reader API
+// Post makes a HTTP POST request to the Reader API.
 func (reader *ReaderClient) Post(path string, data url.Values) (r *http.Response, err error) {
 	uri := reader.BaseURL + path
 	reader.Sign("POST", uri, data)
@@ -69,7 +69,7 @@ func (reader *ReaderClient) Post(path string, data url.Values) (r *http.Response
 	return resp, nil
 }
 
-// AddBookmark creates a new bookmark for a URL
+// AddBookmark creates a new bookmark for a URL.
 func (reader *ReaderClient) AddBookmark(uri string) (resp *http.Response, err error) {
 	return reader.Post("/bookmarks", url.Values{"url": {uri}})
 }
