@@ -49,7 +49,7 @@ func main() {
   if err != nil {
     panic(err)
   }
-  fmt.Println(article.Author)
+  fmt.Println(article.Title)
 }
 ```
 
