@@ -1,7 +1,6 @@
 package readability
 
 import (
-	"encoding/json"
 	"net/http"
 	"net/url"
 )
@@ -14,31 +13,20 @@ type ParserClient struct {
 
 // Parse parses the contents of an article.
 func (parser *ParserClient) Parse(articleURL string) (article Article, r *http.Response, err error) {
-	body, resp, err := get(parser.BaseURL+"/parser", url.Values{
+	resp, err := get(parser.BaseURL+"/parser", url.Values{
 		"url":   {articleURL},
 		"token": {parser.ApiKey},
-	})
-	if err != nil {
-		return article, resp, err
-	}
-	err = json.Unmarshal(body, &article)
-	if err != nil {
-		return article, resp, err
-	}
-	return article, resp, nil
+	}, &article)
+	return article, resp, err
 }
 
 // Confidence returns the confidence with which an article can be parsed.
 func (parser *ParserClient) Confidence(articleURL string) (confidence float64, r *http.Response, err error) {
-	body, resp, err := get(parser.BaseURL+"/confidence", url.Values{
+	parsed := Confidence{}
+	resp, err := get(parser.BaseURL+"/confidence", url.Values{
 		"url":   {articleURL},
 		"token": {parser.ApiKey},
-	})
-	if err != nil {
-		return confidence, resp, err
-	}
-	parsed := Confidence{}
-	err = json.Unmarshal(body, &parsed)
+	}, &parsed)
 	if err != nil {
 		return confidence, resp, err
 	}

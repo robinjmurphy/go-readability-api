@@ -2,6 +2,7 @@
 package readability
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -91,19 +92,23 @@ func postWithCredentials(client *oauth.Client, credentials *oauth.Credentials, u
 	return resp, nil
 }
 
-func get(uri string, query url.Values) (body []byte, r *http.Response, err error) {
+func get(uri string, query url.Values, v interface{}) (r *http.Response, err error) {
 	resp, err := http.Get(uri + "?" + query.Encode())
 	if err != nil {
-		return body, r, err
+		return r, err
 	}
 	if resp.StatusCode >= 400 {
-		return body, resp, httpError(resp)
+		return resp, httpError(resp)
 	}
-	body, err = ioutil.ReadAll(resp.Body)
+	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return body, resp, err
+		return resp, err
 	}
-	return body, resp, nil
+	err = json.Unmarshal(body, v)
+	if err != nil {
+		return resp, err
+	}
+	return resp, nil
 }
 
 func httpError(resp *http.Response) error {
