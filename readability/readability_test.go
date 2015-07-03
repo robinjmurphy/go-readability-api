@@ -69,7 +69,7 @@ func TestLogin(t *testing.T) {
 	}
 }
 
-func TestAddBookmark(t *testing.T) {
+func TestReaderAddBookmark(t *testing.T) {
 	setup()
 	defer teardown()
 	expectedLocation := "https://www.readability.com/api/rest/v1/bookmarks/1"
@@ -85,7 +85,7 @@ func TestAddBookmark(t *testing.T) {
 	}
 }
 
-func TestParse(t *testing.T) {
+func TestParserParse(t *testing.T) {
 	setup()
 	defer teardown()
 	expectedAuthor := "Steve Jobs"
@@ -101,5 +101,33 @@ func TestParse(t *testing.T) {
 	}
 	if article.ShortURL != expectedShortURL {
 		t.Errorf("ShortUrl %v, expected %v", article.ShortURL, expectedShortURL)
+	}
+}
+
+func TestParserConfidence(t *testing.T) {
+	setup()
+	defer teardown()
+	expectedConfidence := 5.5
+	mux.HandleFunc("/confidence", func(w http.ResponseWriter, r *http.Request) {
+		testMethod(t, r, "GET")
+		fmt.Fprintf(w, `{"url": "http://www.example.com/", "confidence": %v}`, expectedConfidence)
+	})
+	confidence, _, err := parser.Confidence("http://www.example.com/")
+	check(t, err)
+	if confidence != expectedConfidence {
+		t.Errorf("Confidence %v, expected %v", confidence, expectedConfidence)
+	}
+}
+
+func TestParserConfidence_invalidJson(t *testing.T) {
+	setup()
+	defer teardown()
+	mux.HandleFunc("/confidence", func(w http.ResponseWriter, r *http.Request) {
+		testMethod(t, r, "GET")
+		fmt.Fprint(w, `foo`)
+	})
+	_, _, err := parser.Confidence("http://www.example.com/")
+	if err == nil {
+		t.Error("Expected error")
 	}
 }

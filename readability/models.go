@@ -18,3 +18,9 @@ type Article struct {
 	URL           string      `json:"url"`
 	WordCount     int         `json:"word_count"`
 }
+
+// Confidence represents a Readability parser confidence response.
+type Confidence struct {
+	Confidence float64 `json:"confidence"`
+	URL        string  `json:"url"`
+}

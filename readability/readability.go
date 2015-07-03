@@ -91,15 +91,19 @@ func postWithCredentials(client *oauth.Client, credentials *oauth.Credentials, u
 	return resp, nil
 }
 
-func get(uri string, query url.Values) (r *http.Response, err error) {
+func get(uri string, query url.Values) (body []byte, r *http.Response, err error) {
 	resp, err := http.Get(uri + "?" + query.Encode())
 	if err != nil {
-		return r, err
+		return body, r, err
 	}
 	if resp.StatusCode >= 400 {
-		return resp, httpError(resp)
+		return body, resp, httpError(resp)
 	}
-	return resp, nil
+	body, err = ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return body, resp, err
+	}
+	return body, resp, nil
 }
 
 func httpError(resp *http.Response) error {
