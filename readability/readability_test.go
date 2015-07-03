@@ -11,16 +11,19 @@ var (
 	mux    *http.ServeMux
 	client *Client
 	reader *ReaderClient
+	parser *ParserClient
 	server *httptest.Server
 )
 
 func setup() {
 	mux = http.NewServeMux()
 	server = httptest.NewServer(mux)
-	client = NewClient("key", "secret")
+	client = NewClient("key", "secret", "token")
 	client.LoginURL = server.URL
 	client.ReaderBaseURL = server.URL
+	client.ParserBaseURL = server.URL
 	reader = client.NewReaderClient("token", "secret")
+	parser = client.NewParserClient()
 }
 
 func teardown() {
@@ -40,7 +43,7 @@ func check(t *testing.T, err error) {
 }
 
 func TestNewClient(t *testing.T) {
-	c := NewClient("key", "secret")
+	c := NewClient("key", "secret", "foo")
 	readerBaseUrl := c.ReaderBaseURL
 	if readerBaseUrl != DefaultReaderBaseURL {
 		t.Errorf("NewClient ReaderBaseURL is %v, expected %v", readerBaseUrl, DefaultReaderBaseURL)
@@ -79,5 +82,24 @@ func TestAddBookmark(t *testing.T) {
 	location := resp.Header.Get("location")
 	if location != expectedLocation {
 		t.Errorf("Location %v, expected %v", location, expectedLocation)
+	}
+}
+
+func TestParse(t *testing.T) {
+	setup()
+	defer teardown()
+	expectedAuthor := "Steve Jobs"
+	expectedShortURL := "http://rdd.me/4ksnrhhl"
+	mux.HandleFunc("/parser", func(w http.ResponseWriter, r *http.Request) {
+		testMethod(t, r, "GET")
+		fmt.Fprintf(w, `{"author": "%s", "short_url": "%s"}`, expectedAuthor, expectedShortURL)
+	})
+	article, _, err := parser.Parse("http://www.example.com/")
+	check(t, err)
+	if article.Author != expectedAuthor {
+		t.Errorf("Author %v, expected %v", article.Author, expectedAuthor)
+	}
+	if article.ShortURL != expectedShortURL {
+		t.Errorf("ShortUrl %v, expected %v", article.ShortURL, expectedShortURL)
 	}
 }

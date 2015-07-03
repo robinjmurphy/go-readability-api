@@ -2,6 +2,7 @@
 package readability
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -13,11 +14,14 @@ import (
 
 const DefaultLoginURL = "https://www.readability.com/api/rest/v1/oauth/access_token"
 const DefaultReaderBaseURL = "https://www.readability.com/api/rest/v1"
+const DefaultParserBaseURL = "https://www.readability.com/api/content/v1"
 
 // A Client manages communication with the Readability APIs.
 type Client struct {
 	LoginURL      string
 	ReaderBaseURL string
+	ParserBaseURL string
+	ParserApiKey  string
 	OAuthClient   *oauth.Client
 }
 
@@ -28,13 +32,40 @@ type ReaderClient struct {
 	OAuthCredentials *oauth.Credentials
 }
 
+// A ParserClient models the Readability Parser API.
+type ParserClient struct {
+	BaseURL string
+	ApiKey  string
+}
+
+// An Article represents a Readability article object.
+type Article struct {
+	Author        interface{} `json:"author"`
+	Content       string      `json:"content"`
+	DatePublished interface{} `json:"date_published"`
+	Dek           interface{} `json:"dek"`
+	Direction     string      `json:"direction"`
+	Domain        string      `json:"domain"`
+	Excerpt       string      `json:"excerpt"`
+	LeadImageURL  string      `json:"lead_image_url"`
+	NextPageID    interface{} `json:"next_page_id"`
+	RenderedPages int         `json:"rendered_pages"`
+	ShortURL      string      `json:"short_url"`
+	Title         string      `json:"title"`
+	TotalPages    int         `json:"total_pages"`
+	URL           string      `json:"url"`
+	WordCount     int         `json:"word_count"`
+}
+
 // NewClient returns a new Readability client.
-func NewClient(key, secret string) *Client {
+func NewClient(key, secret, parserApiKey string) *Client {
 	credentials := oauth.Credentials{Token: key, Secret: secret}
 	client := Client{
 		LoginURL:      DefaultLoginURL,
 		ReaderBaseURL: DefaultReaderBaseURL,
+		ParserBaseURL: DefaultParserBaseURL,
 		OAuthClient:   &oauth.Client{Credentials: credentials},
+		ParserApiKey:  parserApiKey,
 	}
 	return &client
 }
@@ -48,6 +79,15 @@ func (client *Client) NewReaderClient(token, secret string) *ReaderClient {
 		OAuthCredentials: &credentials,
 	}
 	return &reader
+}
+
+// NewParserClient returns a new ParserClient.
+func (client *Client) NewParserClient() *ParserClient {
+	parser := ParserClient{
+		BaseURL: client.ParserBaseURL,
+		ApiKey:  client.ParserApiKey,
+	}
+	return &parser
 }
 
 // Login returns an access token and secret for a user that can be used to
@@ -79,8 +119,28 @@ func (reader *ReaderClient) Post(path string, data url.Values) (r *http.Response
 }
 
 // AddBookmark creates a new bookmark for a URL.
-func (reader *ReaderClient) AddBookmark(uri string) (resp *http.Response, err error) {
+func (reader *ReaderClient) AddBookmark(uri string) (r *http.Response, err error) {
 	return reader.Post("/bookmarks", url.Values{"url": {uri}})
+}
+
+// Parse parses the contents of an article.
+func (parser *ParserClient) Parse(articleURL string) (article Article, r *http.Response, err error) {
+	resp, err := get(parser.BaseURL+"/parser", url.Values{
+		"url":   {articleURL},
+		"token": {parser.ApiKey},
+	})
+	if err != nil {
+		return article, resp, err
+	}
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return article, resp, err
+	}
+	err = json.Unmarshal(body, &article)
+	if err != nil {
+		return article, resp, err
+	}
+	return article, resp, nil
 }
 
 func post(client *oauth.Client, credentials *oauth.Credentials, uri string, data url.Values) (r *http.Response, err error) {
@@ -90,8 +150,23 @@ func post(client *oauth.Client, credentials *oauth.Credentials, uri string, data
 		return resp, err
 	}
 	if resp.StatusCode >= 400 {
-		return resp, errors.New(
-			fmt.Sprintf("Error %d %s: %s %s", resp.StatusCode, http.StatusText(resp.StatusCode), resp.Request.Method, resp.Request.URL))
+		return resp, httpError(resp)
 	}
 	return resp, nil
+}
+
+func get(uri string, query url.Values) (r *http.Response, err error) {
+	resp, err := http.Get(uri + "?" + query.Encode())
+	if err != nil {
+		return r, err
+	}
+	if resp.StatusCode >= 400 {
+		return resp, httpError(resp)
+	}
+	return resp, nil
+}
+
+func httpError(resp *http.Response) error {
+	return errors.New(
+		fmt.Sprintf("Error %d %s: %s %s", resp.StatusCode, http.StatusText(resp.StatusCode), resp.Request.Method, resp.Request.URL))
 }
