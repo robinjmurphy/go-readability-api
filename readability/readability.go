@@ -20,8 +20,8 @@ const DefaultParserBaseURL = "https://www.readability.com/api/content/v1"
 var LoginURL = DefaultLoginURL
 
 // NewReaderClient returns a new ReaderClient.
-func NewReaderClient(consumerToken, consumerSecret, token, secret string) *ReaderClient {
-	consumerCredentials := oauth.Credentials{Token: consumerToken, Secret: consumerSecret}
+func NewReaderClient(consumerKey, consumerSecret, token, secret string) *ReaderClient {
+	consumerCredentials := oauth.Credentials{Token: consumerKey, Secret: consumerSecret}
 	userCredentials := oauth.Credentials{Token: token, Secret: secret}
 	reader := ReaderClient{
 		BaseURL:          DefaultReaderBaseURL,
@@ -42,8 +42,8 @@ func NewParserClient(apiKey string) *ParserClient {
 
 // Login returns an access token and secret for a user that can be used to
 // create a ReaderClient.
-func Login(consumerToken, consumerSecret, username, password string) (token, secret string, err error) {
-	consumerCredentials := oauth.Credentials{Token: consumerToken, Secret: consumerSecret}
+func Login(consumerKey, consumerSecret, username, password string) (token, secret string, err error) {
+	consumerCredentials := oauth.Credentials{Token: consumerKey, Secret: consumerSecret}
 	data := url.Values{
 		"x_auth_username": {username},
 		"x_auth_password": {password},
