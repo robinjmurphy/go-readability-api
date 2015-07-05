@@ -83,8 +83,7 @@ func (client *Client) Login(username, password string) (token, secret string, er
 	return formData.Get("oauth_token"), formData.Get("oauth_token_secret"), nil
 }
 
-func get(uri string, query url.Values, v interface{}) (*http.Response, error) {
-	uri = uri + "?" + query.Encode()
+func get(uri string, v interface{}) (*http.Response, error) {
 	req, err := http.NewRequest("GET", uri, nil)
 	if err != nil {
 		return nil, err

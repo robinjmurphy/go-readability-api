@@ -15,7 +15,7 @@ type ReaderClient struct {
 }
 
 // Post makes a HTTP POST request to the Reader API.
-func (reader *ReaderClient) Post(path string, data url.Values, v interface{}) (r *http.Response, err error) {
+func (reader *ReaderClient) Post(path string, data url.Values, v interface{}) (*http.Response, error) {
 	uri := reader.BaseURL + path
 	reader.OAuthClient.SignForm(reader.OAuthCredentials, "POST", uri, data)
 	return post(uri, data, v)
