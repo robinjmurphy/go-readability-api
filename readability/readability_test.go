@@ -85,6 +85,25 @@ func TestReaderAddBookmark(t *testing.T) {
 	}
 }
 
+func TestReaderGetArticle(t *testing.T) {
+	setup()
+	defer teardown()
+	expectedAuthor := "Steve Jobs"
+	expectedShortURL := "http://rdd.me/4ksnrhhl"
+	mux.HandleFunc("/articles/123", func(w http.ResponseWriter, r *http.Request) {
+		testMethod(t, r, "GET")
+		fmt.Fprintf(w, `{"author": "%s", "short_url": "%s"}`, expectedAuthor, expectedShortURL)
+	})
+	article, _, err := reader.GetArticle("123")
+	check(t, err)
+	if article.Author != expectedAuthor {
+		t.Errorf("Author %v, expected %v", article.Author, expectedAuthor)
+	}
+	if article.ShortURL != expectedShortURL {
+		t.Errorf("ShortUrl %v, expected %v", article.ShortURL, expectedShortURL)
+	}
+}
+
 func TestParserParse(t *testing.T) {
 	setup()
 	defer teardown()
