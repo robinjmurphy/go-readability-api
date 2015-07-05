@@ -100,13 +100,11 @@ func get(uri string, query url.Values, v interface{}) (r *http.Response, err err
 	if resp.StatusCode >= 400 {
 		return resp, httpError(resp)
 	}
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return resp, err
-	}
-	err = json.Unmarshal(body, v)
-	if err != nil {
-		return resp, err
+	if v != nil {
+		err = json.NewDecoder(resp.Body).Decode(v)
+		if err != nil {
+			return resp, err
+		}
 	}
 	return resp, nil
 }
