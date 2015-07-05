@@ -11,13 +11,6 @@ type ParserClient struct {
 	ApiKey  string
 }
 
-// Get makes a GET request to the Parser API
-func (parser *ParserClient) Get(path string, query url.Values, v interface{}) (*http.Response, error) {
-	query.Add("token", parser.ApiKey)
-	uri := parser.BaseURL + path + "?" + query.Encode()
-	return get(uri, v)
-}
-
 // Parse parses the contents of an article.
 func (parser *ParserClient) Parse(articleURL string) (article Article, r *http.Response, err error) {
 	query := url.Values{"url": {articleURL}}
@@ -34,4 +27,11 @@ func (parser *ParserClient) Confidence(articleURL string) (confidence float64, r
 		return confidence, resp, err
 	}
 	return parsed.Confidence, resp, nil
+}
+
+// Get makes a GET request to the Parser API
+func (parser *ParserClient) Get(path string, query url.Values, v interface{}) (*http.Response, error) {
+	query.Add("token", parser.ApiKey)
+	uri := parser.BaseURL + path + "?" + query.Encode()
+	return get(uri, v)
 }
