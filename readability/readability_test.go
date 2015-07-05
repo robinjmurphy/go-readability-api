@@ -9,7 +9,6 @@ import (
 
 var (
 	mux    *http.ServeMux
-	client *Client
 	reader *ReaderClient
 	parser *ParserClient
 	server *httptest.Server
@@ -18,12 +17,11 @@ var (
 func setup() {
 	mux = http.NewServeMux()
 	server = httptest.NewServer(mux)
-	client = NewClient("key", "secret", "token")
-	client.LoginURL = server.URL
-	client.ReaderBaseURL = server.URL
-	client.ParserBaseURL = server.URL
-	reader = client.NewReaderClient("token", "secret")
-	parser = client.NewParserClient()
+	LoginURL = server.URL
+	reader = NewReaderClient("consumer_token", "consumer_secret", "token", "secret")
+	parser = NewParserClient("parser_api_key")
+	reader.BaseURL = server.URL
+	parser.BaseURL = server.URL
 }
 
 func teardown() {
@@ -42,14 +40,6 @@ func check(t *testing.T, err error) {
 	}
 }
 
-func TestNewClient(t *testing.T) {
-	c := NewClient("key", "secret", "foo")
-	readerBaseUrl := c.ReaderBaseURL
-	if readerBaseUrl != DefaultReaderBaseURL {
-		t.Errorf("NewClient ReaderBaseURL is %v, expected %v", readerBaseUrl, DefaultReaderBaseURL)
-	}
-}
-
 func TestLogin(t *testing.T) {
 	setup()
 	defer teardown()
@@ -59,7 +49,7 @@ func TestLogin(t *testing.T) {
 		testMethod(t, r, "POST")
 		fmt.Fprintf(w, "oauth_token=%s&oauth_token_secret=%s", expectedToken, expectedSecret)
 	})
-	token, secret, err := client.Login("username", "password")
+	token, secret, err := Login("consumer_token", "consumer_secret", "username", "password")
 	check(t, err)
 	if token != expectedToken {
 		t.Errorf("Token %s, expected %s", token, expectedToken)

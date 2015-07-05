@@ -17,58 +17,41 @@ const DefaultLoginURL = "https://www.readability.com/api/rest/v1/oauth/access_to
 const DefaultReaderBaseURL = "https://www.readability.com/api/rest/v1"
 const DefaultParserBaseURL = "https://www.readability.com/api/content/v1"
 
-// A Client manages communication with the Readability APIs.
-type Client struct {
-	LoginURL      string
-	ReaderBaseURL string
-	ParserBaseURL string
-	ParserApiKey  string
-	OAuthClient   *oauth.Client
-}
-
-// NewClient returns a new Readability client.
-func NewClient(key, secret, parserApiKey string) *Client {
-	credentials := oauth.Credentials{Token: key, Secret: secret}
-	client := Client{
-		LoginURL:      DefaultLoginURL,
-		ReaderBaseURL: DefaultReaderBaseURL,
-		ParserBaseURL: DefaultParserBaseURL,
-		OAuthClient:   &oauth.Client{Credentials: credentials},
-		ParserApiKey:  parserApiKey,
-	}
-	return &client
-}
+var LoginURL = DefaultLoginURL
 
 // NewReaderClient returns a new ReaderClient.
-func (client *Client) NewReaderClient(token, secret string) *ReaderClient {
-	credentials := oauth.Credentials{Token: token, Secret: secret}
+func NewReaderClient(consumerToken, consumerSecret, token, secret string) *ReaderClient {
+	consumerCredentials := oauth.Credentials{Token: consumerToken, Secret: consumerSecret}
+	userCredentials := oauth.Credentials{Token: token, Secret: secret}
 	reader := ReaderClient{
-		BaseURL:          client.ReaderBaseURL,
-		OAuthClient:      client.OAuthClient,
-		OAuthCredentials: &credentials,
+		BaseURL:          DefaultReaderBaseURL,
+		OAuthClient:      &oauth.Client{Credentials: consumerCredentials},
+		OAuthCredentials: &userCredentials,
 	}
 	return &reader
 }
 
 // NewParserClient returns a new ParserClient.
-func (client *Client) NewParserClient() *ParserClient {
+func NewParserClient(apiKey string) *ParserClient {
 	parser := ParserClient{
-		BaseURL: client.ParserBaseURL,
-		ApiKey:  client.ParserApiKey,
+		BaseURL: DefaultParserBaseURL,
+		ApiKey:  apiKey,
 	}
 	return &parser
 }
 
 // Login returns an access token and secret for a user that can be used to
 // create a ReaderClient.
-func (client *Client) Login(username, password string) (token, secret string, err error) {
+func Login(consumerToken, consumerSecret, username, password string) (token, secret string, err error) {
+	consumerCredentials := oauth.Credentials{Token: consumerToken, Secret: consumerSecret}
 	data := url.Values{
 		"x_auth_username": {username},
 		"x_auth_password": {password},
 		"x_auth_mode":     {"client_auth"},
 	}
-	client.OAuthClient.SignForm(nil, "POST", client.LoginURL, data)
-	resp, err := post(client.LoginURL, data, nil)
+	client := &oauth.Client{Credentials: consumerCredentials}
+	client.SignForm(nil, "POST", LoginURL, data)
+	resp, err := post(LoginURL, data, nil)
 	if err != nil {
 		return token, secret, err
 	}

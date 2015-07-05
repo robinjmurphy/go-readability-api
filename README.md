@@ -22,8 +22,7 @@ package main
 import "github.com/robinjmurphy/go-readability-api/readability"
 
 func main() {
-  client := readability.NewClient("consumer_key", "consumer_secret", "parser_api_key")
-  reader := client.NewReaderClient("access_token", "access_token_secret")
+  reader := readability.NewReaderClient("consumer_key", "consumer_secret", "access_token", "access_token_secret")
   _, err := reader.AddBookmark("http://www.bbc.co.uk/news/technology-33228149")
   if err != nil {
     panic(err)
@@ -43,8 +42,7 @@ import (
 )
 
 func main() {
-  client := readability.NewClient("consumer_key", "consumer_secret", "parser_api_key")
-  parser := client.NewParserClient()
+  parser := readability.NewParserClient("parser_api_key")
   article, _, err := parser.Parse("http://www.bbc.co.uk/news/technology-33228149")
   if err != nil {
     panic(err)
@@ -58,7 +56,7 @@ func main() {
 You can retrieve an access token and secret for a user with their username and password:
 
 ```go
-token, secret, _, err := client.Login("username", "password")
+token, secret, _, err := readability.Login("consumer_key", "consumer_secret", "username", "password")
 if err != nill {
   panic(err)
 }
