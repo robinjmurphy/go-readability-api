@@ -15,12 +15,13 @@ type ReaderClient struct {
 }
 
 // Post makes a HTTP POST request to the Reader API.
-func (reader *ReaderClient) Post(path string, data url.Values) (r *http.Response, err error) {
+func (reader *ReaderClient) Post(path string, data url.Values, v interface{}) (r *http.Response, err error) {
 	uri := reader.BaseURL + path
-	return postWithCredentials(reader.OAuthClient, reader.OAuthCredentials, uri, data)
+	reader.OAuthClient.SignForm(reader.OAuthCredentials, "POST", uri, data)
+	return post(uri, data, v)
 }
 
 // AddBookmark creates a new bookmark for a URL.
 func (reader *ReaderClient) AddBookmark(uri string) (r *http.Response, err error) {
-	return reader.Post("/bookmarks", url.Values{"url": {uri}})
+	return reader.Post("/bookmarks", url.Values{"url": {uri}}, nil)
 }

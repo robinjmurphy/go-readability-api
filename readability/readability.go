@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"github.com/garyburd/go-oauth/oauth"
 )
@@ -61,11 +62,13 @@ func (client *Client) NewParserClient() *ParserClient {
 // Login returns an access token and secret for a user that can be used to
 // create a ReaderClient.
 func (client *Client) Login(username, password string) (token, secret string, err error) {
-	resp, err := postWithCredentials(client.OAuthClient, nil, client.LoginURL, url.Values{
+	data := url.Values{
 		"x_auth_username": {username},
 		"x_auth_password": {password},
 		"x_auth_mode":     {"client_auth"},
-	})
+	}
+	client.OAuthClient.SignForm(nil, "POST", client.LoginURL, data)
+	resp, err := post(client.LoginURL, data, nil)
 	if err != nil {
 		return token, secret, err
 	}
@@ -80,22 +83,27 @@ func (client *Client) Login(username, password string) (token, secret string, er
 	return formData.Get("oauth_token"), formData.Get("oauth_token_secret"), nil
 }
 
-func postWithCredentials(client *oauth.Client, credentials *oauth.Credentials, uri string, data url.Values) (r *http.Response, err error) {
-	client.SignForm(credentials, "POST", uri, data)
-	resp, err := http.PostForm(uri, data)
+func get(uri string, query url.Values, v interface{}) (*http.Response, error) {
+	uri = uri + "?" + query.Encode()
+	req, err := http.NewRequest("GET", uri, nil)
 	if err != nil {
-		return resp, err
+		return nil, err
 	}
-	if resp.StatusCode >= 400 {
-		return resp, httpError(resp)
-	}
-	return resp, nil
+	return do(req, v)
 }
 
-func get(uri string, query url.Values, v interface{}) (r *http.Response, err error) {
-	resp, err := http.Get(uri + "?" + query.Encode())
+func post(uri string, data url.Values, v interface{}) (*http.Response, error) {
+	req, err := http.NewRequest("POST", uri, strings.NewReader(data.Encode()))
 	if err != nil {
-		return r, err
+		return nil, err
+	}
+	return do(req, v)
+}
+
+func do(req *http.Request, v interface{}) (*http.Response, error) {
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return resp, err
 	}
 	if resp.StatusCode >= 400 {
 		return resp, httpError(resp)
