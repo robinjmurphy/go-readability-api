@@ -57,7 +57,7 @@ You can retrieve an access token and secret for a user with their username and p
 
 ```go
 token, secret, _, err := readability.Login("consumer_key", "consumer_secret", "username", "password")
-if err != nill {
+if err != nil {
   panic(err)
 }
 
